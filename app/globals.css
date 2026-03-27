@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --background: #fdfcff;
+  --foreground: #1a1c1e;
+  --primary: #0061a4;
+  --on-primary: #ffffff;
+  --primary-container: #d1e4ff;
+  --on-primary-container: #001d36;
+  --secondary: #535f70;
+  --on-secondary: #ffffff;
+  --secondary-container: #d7e3f7;
+  --on-secondary-container: #101c2b;
+  --surface: #fdfcff;
+  --on-surface: #1a1c1e;
+  --surface-variant: #dfe2eb;
+  --on-surface-variant: #43474e;
+  --outline: #73777f;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+}
+
+@layer components {
+  .card-m3 {
+    @apply bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md;
+  }
+  .btn-primary {
+    @apply bg-[var(--primary)] text-white px-6 py-2.5 rounded-full font-medium hover:opacity-90 transition-all flex items-center gap-2;
+  }
+}

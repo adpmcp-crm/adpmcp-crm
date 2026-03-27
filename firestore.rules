@@ -1,0 +1,239 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required, email format)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - role: string (required, ['admin', 'pastor', 'secretario'])
+    //   - campusId: string (optional)
+    //
+    // Collection: members
+    // Document ID: {memberId}
+    // Fields:
+    //   - id: string (optional)
+    //   - name: string (required)
+    //   - email: string (optional, email format)
+    //   - phone: string (required)
+    //   - status: string (required, ['ativo', 'inativo', 'baptizado', 'discipulado', 'não baptizado'])
+    //   - campusId: string (required)
+    //   - function: string (required)
+    //   - workplace: string (optional)
+    //   - maritalStatus: string (optional)
+    //   - baptismStatus: string (required, ['Baptizado', 'Não Batizado'])
+    //   - createdAt: timestamp (optional)
+    //
+    // Collection: team
+    // Document ID: {teamId}
+    // Fields:
+    //   - id: string (optional)
+    //   - name: string (required)
+    //   - email: string (optional, email format)
+    //   - phone: string (required)
+    //   - status: string (required, ['Pastor', 'Evangelista', 'Ancião', 'Diacono', 'Diaconisa', 'Cooperador', 'Cooperadora'])
+    //   - campusId: string (required)
+    //   - function: string (required)
+    //   - workplace: string (optional)
+    //   - maritalStatus: string (optional)
+    //   - baptismStatus: string (required, ['Baptizado', 'Não Batizado'])
+    //   - createdAt: timestamp (optional)
+    //
+    // Collection: departments
+    // Document ID: {deptId}
+    // Fields:
+    //   - id: string (optional)
+    //   - name: string (required)
+    //   - leaderName: string (required)
+    //   - memberCount: number (optional)
+    //
+    // Collection: activities
+    // Document ID: {activityId}
+    // Fields:
+    //   - id: string (optional)
+    //   - title: string (required)
+    //   - month: string (required)
+    //   - day: string (required)
+    //   - department: string (optional)
+    //   - location: string (optional)
+    //   - status: string (optional, ['Completed', 'Confirmed', 'Next Week', 'Pending'])
+    //
+    // Collection: campuses
+    // Document ID: {campusId}
+    // Fields:
+    //   - id: string (optional)
+    //   - name: string (required)
+    //   - address: string (required)
+    //   - pastorName: string (required)
+    //   - memberCount: number (optional)
+    //   - imageUrl: string (optional)
+    //
+    // ===============================================================
+
+    // Collection: notifications
+    // Document ID: {notificationId}
+    // Fields:
+    //   - id: string (optional)
+    //   - title: string (required)
+    //   - message: string (required)
+    //   - type: string (required, ['info', 'success', 'warning', 'error'])
+    //   - read: bool (optional)
+    //   - createdAt: timestamp (optional)
+    //
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin') ||
+          (request.auth.token.email == "jobzezzavr@gmail.com" && request.auth.token.email_verified == true)
+        );
+    }
+
+    function isPastor() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             getUserData().role == 'pastor';
+    }
+
+    function isSecretario() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             getUserData().role == 'secretario';
+    }
+
+    function isStaff() {
+      return isAdmin() || isPastor() || isSecretario();
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.email is string && isValidEmail(data.email) &&
+             data.role in ['admin', 'pastor', 'secretario'] &&
+             (!('displayName' in data) || data.displayName is string) &&
+             (!('photoURL' in data) || data.photoURL is string);
+    }
+
+    function isValidMember(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.status in ['ativo', 'inativo', 'baptizado', 'discipulado', 'não baptizado'] &&
+             data.campusId is string &&
+             data.phone is string &&
+             data.function is string &&
+             data.baptismStatus in ['Baptizado', 'Não Batizado'] &&
+             (!('email' in data) || isValidEmail(data.email));
+    }
+
+    function isValidTeamMember(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.status in ['Pastor', 'Evangelista', 'Ancião', 'Diacono', 'Diaconisa', 'Cooperador', 'Cooperadora'] &&
+             data.campusId is string &&
+             data.phone is string &&
+             data.function is string &&
+             data.baptismStatus in ['Baptizado', 'Não Batizado'] &&
+             (!('email' in data) || isValidEmail(data.email));
+    }
+
+    function isValidDepartment(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.leaderName is string;
+    }
+
+    function isValidActivity(data) {
+      return data.title is string && data.title.size() > 0 &&
+             data.month is string &&
+             data.day is string &&
+             (!('successFeedback' in data) || data.successFeedback is string) &&
+             (!('failureFeedback' in data) || data.failureFeedback is string);
+    }
+
+    function isValidCampus(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.address is string &&
+             data.pastorName is string &&
+             (!('phone' in data) || data.phone is string) &&
+             (!('imageUrl' in data) || data.imageUrl is string);
+    }
+
+    function isValidNotification(data) {
+      return data.title is string && data.title.size() > 0 &&
+             data.message is string &&
+             data.type in ['info', 'success', 'warning', 'error'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(uid) && isValidUser(request.resource.data) && (request.resource.data.role != 'admin' || isAdmin());
+      allow update: if isAuthenticated() && (isAdmin() || (isOwner(uid) && request.resource.data.role == resource.data.role && isValidUser(request.resource.data)));
+      allow delete: if isAdmin();
+    }
+
+    match /members/{memberId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /team/{teamId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /departments/{deptId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /campuses/{campusId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

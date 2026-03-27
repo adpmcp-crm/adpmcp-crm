@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Informações do usuário do sistema",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "pastor", "secretario"] },
+        "campusId": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "Membro da igreja",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["ativo", "inativo", "baptizado", "discipulado", "não baptizado"] },
+        "campusId": { "type": "string" },
+        "function": { "type": "string" },
+        "workplace": { "type": "string" },
+        "maritalStatus": { "type": "string" },
+        "baptismStatus": { "type": "string", "enum": ["Baptizado", "Não Batizado"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "status", "campusId", "phone", "function"]
+    },
+    "TeamMember": {
+      "title": "Team Member",
+      "description": "Membro da equipe de liderança",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pastor", "Evangelista", "Ancião", "Diacono", "Diaconisa", "Cooperador", "Cooperadora"] },
+        "campusId": { "type": "string" },
+        "function": { "type": "string" },
+        "workplace": { "type": "string" },
+        "maritalStatus": { "type": "string" },
+        "baptismStatus": { "type": "string", "enum": ["Baptizado", "Não Batizado"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "status", "campusId", "phone", "function"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Departamento da igreja",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "leaderName": { "type": "string" },
+        "memberCount": { "type": "number" }
+      },
+      "required": ["name", "leaderName"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Atividade anual da igreja",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "month": { "type": "string" },
+        "day": { "type": "string" },
+        "department": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string", "enum": ["Completed", "Confirmed", "Next Week", "Pending"] }
+      },
+      "required": ["title", "month", "day"]
+    },
+    "Campus": {
+      "title": "Campus",
+      "description": "Unidade da igreja",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "pastorName": { "type": "string" },
+        "memberCount": { "type": "number" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "pastorName"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Notificação do sistema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "message", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "Perfis de usuários"
+    },
+    "/members/{memberId}": {
+      "schema": "Member",
+      "description": "Membros da igreja"
+    },
+    "/team/{teamId}": {
+      "schema": "TeamMember",
+      "description": "Equipe de liderança"
+    },
+    "/departments/{deptId}": {
+      "schema": "Department",
+      "description": "Departamentos da igreja"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Atividades anuais"
+    },
+    "/campuses/{campusId}": {
+      "schema": "Campus",
+      "description": "Unidades da igreja"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Notificações do sistema"
+    }
+  }
+}

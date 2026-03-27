@@ -17,15 +17,15 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { CampusModal } from '@/components/modals/CampusModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { ManageCampusModal } from '@/components/modals/ManageCampusModal';
 
 export default function CampusesPage() {
-  const { user, loading: authLoading } = useFirebase();
+  const { user, loading: authLoading } = useAuth();
   const [campuses, setCampuses] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
@@ -41,32 +41,25 @@ export default function CampusesPage() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch Campuses
-    const qCampus = query(collection(db, 'campuses'), orderBy('name', 'asc'));
-    const unsubCampus = onSnapshot(qCampus, (snapshot) => {
+    const campusesQ = query(collection(db, 'campuses'), orderBy('name', 'asc'));
+    const membersQ = query(collection(db, 'members'));
+    const teamQ = query(collection(db, 'team'));
+
+    const unsubCampuses = onSnapshot(campusesQ, (snapshot) => {
       setCampuses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      console.error('Error fetching campuses:', error);
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'campuses'));
 
-    // Fetch Members for counts (assuming church is stored in campusId or similar)
-    const unsubMembers = onSnapshot(collection(db, 'members'), (snapshot) => {
-      setMembers(snapshot.docs.map(doc => doc.data()));
-    }, (error) => {
-      console.error('Error fetching members:', error);
-    });
+    const unsubMembers = onSnapshot(membersQ, (snapshot) => {
+      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'members'));
 
-    // Fetch Team for counts
-    const unsubTeam = onSnapshot(collection(db, 'team'), (snapshot) => {
-      setTeam(snapshot.docs.map(doc => doc.data()));
+    const unsubTeam = onSnapshot(teamQ, (snapshot) => {
+      setTeam(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
-    }, (error) => {
-      console.error('Error fetching team:', error);
-      setLoading(false);
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'team'));
 
     return () => {
-      unsubCampus();
+      unsubCampuses();
       unsubMembers();
       unsubTeam();
     };
@@ -77,8 +70,9 @@ export default function CampusesPage() {
     try {
       await deleteDoc(doc(db, 'campuses', campusToDelete));
       setCampusToDelete(null);
+      setIsConfirmOpen(false);
     } catch (error) {
-      console.error('Error deleting:', error);
+      handleFirestoreError(error, OperationType.DELETE, `campuses/${campusToDelete}`);
     }
   };
 

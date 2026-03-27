@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { FirebaseProvider } from "@/components/providers/FirebaseProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { AppWrapper } from "@/components/layout/AppWrapper";
 
@@ -21,11 +21,11 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
         <ErrorBoundary>
-          <FirebaseProvider>
+          <AuthProvider>
             <AppWrapper>
               {children}
             </AppWrapper>
-          </FirebaseProvider>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>

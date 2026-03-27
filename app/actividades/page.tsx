@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { 
   Calendar, 
   Plus, 
@@ -21,7 +21,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ActivityModal } from '@/components/modals/ActivityModal';
 
 export default function ActivitiesPage() {
-  const { user, loading: authLoading } = useFirebase();
+  const { user, loading: authLoading } = useAuth();
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,15 +32,12 @@ export default function ActivitiesPage() {
     if (!user) return;
 
     const q = query(collection(db, 'activities'), orderBy('month', 'asc'), orderBy('day', 'asc'));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setActivities(data);
+      setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching activities:", error);
+      handleFirestoreError(error, OperationType.GET, 'activities');
       setLoading(false);
     });
 
@@ -52,7 +49,7 @@ export default function ActivitiesPage() {
       try {
         await deleteDoc(doc(db, 'activities', id));
       } catch (error) {
-        console.error('Error deleting:', error);
+        handleFirestoreError(error, OperationType.DELETE, `activities/${id}`);
         alert('Erro ao excluir.');
       }
     }

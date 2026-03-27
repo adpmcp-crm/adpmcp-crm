@@ -20,7 +20,7 @@ export function NotificationDropdown() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...(doc.data() as any)
       }));
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.read).length);

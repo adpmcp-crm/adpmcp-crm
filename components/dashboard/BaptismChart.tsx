@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -21,6 +21,33 @@ const data = [
 ];
 
 export function BaptismChart() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm h-[400px]">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Crescimento de Batismos</h3>
+            <p className="text-sm text-gray-500">Acompanhamento semestral</p>
+          </div>
+          <select className="bg-gray-50 border-none rounded-xl text-sm font-medium px-4 py-2 focus:ring-2 focus:ring-blue-100">
+            <option>Últimos 6 meses</option>
+            <option>Último ano</option>
+          </select>
+        </div>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm h-[400px]">
       <div className="flex items-center justify-between mb-8">

@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { 
   User, 
   Mail, 
@@ -13,13 +15,10 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { updateProfile } from 'firebase/auth';
 import Image from 'next/image';
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useFirebase();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -36,13 +35,13 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const docRef = doc(db, 'users', user.uid);
+        const docRef = doc(db, 'profiles', user.uid);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
           const data = docSnap.data();
           setFormData({
-            displayName: data.displayName || user.displayName || '',
+            displayName: data.display_name || user.displayName || '',
             email: user.email || '',
             phone: data.phone || '',
             bio: data.bio || '',
@@ -58,7 +57,7 @@ export default function ProfilePage() {
           });
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        handleFirestoreError(error, OperationType.GET, `profiles/${user.uid}`);
       } finally {
         setLoading(false);
       }
@@ -75,23 +74,17 @@ export default function ProfilePage() {
     setMessage({ type: '', text: '' });
 
     try {
-      // Update Auth Profile
-      await updateProfile(user, {
-        displayName: formData.displayName
-      });
-
-      // Update Firestore
-      const docRef = doc(db, 'users', user.uid);
+      const docRef = doc(db, 'profiles', user.uid);
       await setDoc(docRef, {
-        displayName: formData.displayName,
+        display_name: formData.displayName,
         phone: formData.phone,
         bio: formData.bio,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       }, { merge: true });
 
       setMessage({ type: 'success', text: 'Perfil atualizado com sucesso!' });
     } catch (error) {
-      console.error('Error updating profile:', error);
+      handleFirestoreError(error, OperationType.WRITE, `profiles/${user.uid}`);
       setMessage({ type: 'error', text: 'Erro ao atualizar perfil.' });
     } finally {
       setSaving(false);
@@ -167,7 +160,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="font-bold text-gray-900">Membro desde</p>
-                <p className="text-gray-500">{user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                <p className="text-gray-500">{user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('pt-BR') : 'N/A'}</p>
               </div>
             </div>
           </div>

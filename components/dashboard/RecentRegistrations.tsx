@@ -10,7 +10,7 @@ import { motion } from 'motion/react';
 export function RecentRegistrations() {
   const { user } = useFirebase();
   const [registrations, setRegistrations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(!!user);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;

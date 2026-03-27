@@ -1,15 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Search, User as UserIcon, LogIn } from 'lucide-react';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
-import { loginWithGoogle } from '@/lib/firebase';
+import { Search, User as UserIcon } from 'lucide-react';
+import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import { NotificationDropdown } from './NotificationDropdown';
 
 export function TopBar() {
-  const { user, profile } = useFirebase();
+  const { user, profile } = useAuth();
 
   return (
     <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 flex items-center justify-between sticky top-0 z-10">
@@ -31,7 +30,7 @@ export function TopBar() {
 
         <Link href="/perfil" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-gray-900">{user?.displayName}</p>
+            <p className="text-sm font-bold text-gray-900">{user?.displayName || 'Usuário'}</p>
             <p className="text-xs text-gray-500 capitalize">{profile?.role || 'Membro'}</p>
           </div>
           <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-50">

@@ -62,7 +62,7 @@ export function ManageCampusModal({ isOpen, onClose, campus }: ManageCampusModal
       unsubTeam();
       setLoading(true); // Reset for next time
     };
-  }, [isOpen, campus?.id]);
+  }, [isOpen, campus?.id, campus?.name]);
 
   const filteredData = (activeTab === 'members' ? members : team).filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

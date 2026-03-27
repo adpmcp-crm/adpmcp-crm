@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Church, Briefcase, UserPlus, Loader2 } from 'lucide-react';
+import { Users, Church, Briefcase, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { collection, getCountFromServer } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export function StatsGrid() {
-  const { user } = useFirebase();
+  const { user } = useAuth();
   const [counts, setCounts] = useState({
     members: 0,
     team: 0,
@@ -20,29 +20,29 @@ export function StatsGrid() {
   useEffect(() => {
     if (!user) return;
 
-    const unsubMembers = onSnapshot(collection(db, 'members'), (snap) => {
-      setCounts(prev => ({ ...prev, members: snap.size }));
-    }, (err) => console.error("Stats members error:", err));
+    const fetchCounts = async () => {
+      try {
+        const [membersSnap, teamSnap, campusesSnap, departmentsSnap] = await Promise.all([
+          getCountFromServer(collection(db, 'members')),
+          getCountFromServer(collection(db, 'team')),
+          getCountFromServer(collection(db, 'campuses')),
+          getCountFromServer(collection(db, 'departments')),
+        ]);
 
-    const unsubTeam = onSnapshot(collection(db, 'team'), (snap) => {
-      setCounts(prev => ({ ...prev, team: snap.size }));
-    }, (err) => console.error("Stats team error:", err));
-
-    const unsubCampuses = onSnapshot(collection(db, 'campuses'), (snap) => {
-      setCounts(prev => ({ ...prev, campuses: snap.size }));
-    }, (err) => console.error("Stats campuses error:", err));
-
-    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
-      setCounts(prev => ({ ...prev, departments: snap.size }));
-      setLoading(false);
-    }, (err) => console.error("Stats depts error:", err));
-
-    return () => {
-      unsubMembers();
-      unsubTeam();
-      unsubCampuses();
-      unsubDepts();
+        setCounts({
+          members: membersSnap.data().count,
+          team: teamSnap.data().count,
+          campuses: campusesSnap.data().count,
+          departments: departmentsSnap.data().count
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.GET, 'multiple_collections');
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchCounts();
   }, [user]);
 
   const stats = [

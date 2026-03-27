@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { 
   Plus, 
   Users, 
@@ -11,18 +14,14 @@ import {
   Loader2,
   Trash2,
   Edit2,
-  ChevronRight,
   ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
 import { DepartmentModal } from '@/components/modals/DepartmentModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 
 export default function DepartmentsPage() {
-  const { user, loading: authLoading } = useFirebase();
+  const { user, loading: authLoading } = useAuth();
   const [departments, setDepartments] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
@@ -37,32 +36,25 @@ export default function DepartmentsPage() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch Departments
-    const qDept = query(collection(db, 'departments'), orderBy('name', 'asc'));
-    const unsubDept = onSnapshot(qDept, (snapshot) => {
+    const deptsQ = query(collection(db, 'departments'), orderBy('name', 'asc'));
+    const membersQ = query(collection(db, 'members'));
+    const teamQ = query(collection(db, 'team'));
+
+    const unsubDepts = onSnapshot(deptsQ, (snapshot) => {
       setDepartments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      console.error('Error fetching departments:', error);
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'departments'));
 
-    // Fetch Members for counts
-    const unsubMembers = onSnapshot(collection(db, 'members'), (snapshot) => {
-      setMembers(snapshot.docs.map(doc => doc.data()));
-    }, (error) => {
-      console.error('Error fetching members:', error);
-    });
+    const unsubMembers = onSnapshot(membersQ, (snapshot) => {
+      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'members'));
 
-    // Fetch Team for counts
-    const unsubTeam = onSnapshot(collection(db, 'team'), (snapshot) => {
-      setTeam(snapshot.docs.map(doc => doc.data()));
+    const unsubTeam = onSnapshot(teamQ, (snapshot) => {
+      setTeam(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
-    }, (error) => {
-      console.error('Error fetching team:', error);
-      setLoading(false);
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'team'));
 
     return () => {
-      unsubDept();
+      unsubDepts();
       unsubMembers();
       unsubTeam();
     };
@@ -73,8 +65,9 @@ export default function DepartmentsPage() {
     try {
       await deleteDoc(doc(db, 'departments', deptToDelete));
       setDeptToDelete(null);
+      setIsConfirmOpen(false);
     } catch (error) {
-      console.error('Error deleting:', error);
+      handleFirestoreError(error, OperationType.DELETE, `departments/${deptToDelete}`);
     }
   };
 

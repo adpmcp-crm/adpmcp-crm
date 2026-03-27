@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { db, loginWithGoogle } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { loginWithGoogle } from '@/lib/auth';
 import { 
   Search, 
   Filter, 
@@ -26,7 +27,7 @@ import { MemberModal } from '@/components/modals/MemberModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 
 export default function TeamPage() {
-  const { user, loading: authLoading } = useFirebase();
+  const { user, loading: authLoading } = useAuth();
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,15 +42,12 @@ export default function TeamPage() {
     if (!user) return;
 
     const q = query(collection(db, 'team'), orderBy('name', 'asc'));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setTeam(data);
+      setTeam(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching team:", error);
+      handleFirestoreError(error, OperationType.GET, 'team');
       setLoading(false);
     });
 
@@ -61,8 +59,9 @@ export default function TeamPage() {
     try {
       await deleteDoc(doc(db, 'team', memberToDelete));
       setMemberToDelete(null);
+      setIsConfirmOpen(false);
     } catch (error) {
-      console.error('Error deleting:', error);
+      handleFirestoreError(error, OperationType.DELETE, `team/${memberToDelete}`);
     }
   };
 
@@ -252,7 +251,7 @@ export default function TeamPage() {
                 <div className="pt-4 border-t border-gray-50 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1 text-gray-400">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span>{member.createdAt?.toDate ? member.createdAt.toDate().toLocaleDateString('pt-BR') : 'Recente'}</span>
+                    <span>{member.created_at ? new Date(member.created_at).toLocaleDateString('pt-BR') : 'Recente'}</span>
                   </div>
                   <button className="text-blue-600 font-bold hover:underline">Ver Perfil</button>
                 </div>

@@ -263,10 +263,10 @@ export function LoginScreen() {
           </button>
         </div>
 
-        <p className="mt-8 text-[10px] text-center text-gray-400 leading-relaxed">
+        <div className="mt-8 text-[10px] text-center text-gray-400 leading-relaxed">
           Ao entrar, você concorda com os nossos <br />
           <button className="font-bold hover:text-gray-600 transition-colors">Termos de Uso</button> e <button className="font-bold hover:text-gray-600 transition-colors">Política de Privacidade</button>.
-        </p>
+        </div>
       </motion.div>
     </div>
   );

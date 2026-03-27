@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { LoginScreen } from '@/components/auth/LoginScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Loader2 } from 'lucide-react';
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useFirebase();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (

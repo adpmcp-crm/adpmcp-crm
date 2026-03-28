@@ -10,17 +10,17 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  createServer(async (req: any, res: any) => {
+  createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error occurred handling', req.url, err);
       res.statusCode = 500;
       res.end('internal server error');
     }
   })
-    .once('error', (err: any) => {
+    .once('error', (err) => {
       console.error(err);
       process.exit(1);
     })

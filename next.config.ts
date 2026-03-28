@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  distDir: 'dist',
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'motion'],
   },

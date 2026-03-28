@@ -19,9 +19,8 @@ import {
   Lock, 
   ArrowLeft,
   Loader2,
-  AlertCircle
+  CircleAlert
 } from 'lucide-react';
-import Image from 'next/image';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -86,17 +85,7 @@ export function LoginScreen() {
       >
         <div className="mb-6 flex justify-center">
           <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center relative">
-             <Image 
-                src="https://ais-dev-lnpxtzhoh7caesmhab2ibw-124689498029.europe-west2.run.app/logo.png" 
-                alt="ADP Logo" 
-                width={60} 
-                height={60}
-                className="object-contain z-10"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-             />
-             <ShieldCheck className="w-10 h-10 text-blue-600 absolute" />
+             <ShieldCheck className="w-10 h-10 text-blue-600" />
           </div>
         </div>
 
@@ -165,7 +154,7 @@ export function LoginScreen() {
 
               {error && (
                 <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-xl text-xs font-medium">
-                  <AlertCircle className="w-4 h-4" />
+                  <CircleAlert className="w-4 h-4" />
                   {error}
                 </div>
               )}

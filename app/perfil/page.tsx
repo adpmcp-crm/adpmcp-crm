@@ -12,7 +12,7 @@ import {
   Loader2, 
   Shield, 
   Calendar,
-  CheckCircle2
+  CircleCheck
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
@@ -139,7 +139,7 @@ export default function ProfilePage() {
             <h3 className="text-xl font-bold text-gray-900">{formData.displayName || 'Usuário'}</h3>
             <p className="text-sm text-gray-500 mb-4">{formData.role}</p>
             <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full w-fit mx-auto">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              <CircleCheck className="w-3.5 h-3.5" />
               Conta Verificada
             </div>
           </div>

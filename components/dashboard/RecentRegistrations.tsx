@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { Download, Filter, MoreHorizontal, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function RecentRegistrations() {
-  const { user } = useFirebase();
+  const { user } = useAuth();
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

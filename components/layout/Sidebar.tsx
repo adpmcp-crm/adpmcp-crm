@@ -12,7 +12,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  UserCircle
+  CircleUser
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/lib/firebase';
@@ -24,10 +24,8 @@ const menuItems = [
   { icon: Church, label: 'Igrejas', href: '/igrejas' },
   { icon: Briefcase, label: 'Departamentos', href: '/departamentos' },
   { icon: Calendar, label: 'Agenda Anual', href: '/agenda-anual' },
-  { icon: UserCircle, label: 'Meu Perfil', href: '/perfil' },
+  { icon: CircleUser, label: 'Meu Perfil', href: '/perfil' },
 ];
-
-import Image from 'next/image';
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -36,18 +34,8 @@ export function Sidebar() {
     <aside className="w-72 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
       <div className="p-8">
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden p-1">
-            <Image 
-              src="https://ais-dev-lnpxtzhoh7caesmhab2ibw-124689498029.europe-west2.run.app/logo.png" 
-              alt="ADP Logo" 
-              width={40} 
-              height={40}
-              className="object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            <Church className="text-blue-600 w-6 h-6 absolute" />
+          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden p-1 relative">
+            <Church className="text-blue-600 w-6 h-6" />
           </div>
           <div className="flex flex-col">
             <h1 className="text-lg font-bold text-gray-900 tracking-tight leading-tight">

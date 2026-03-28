@@ -202,6 +202,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /profiles/{uid} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
     match /members/{memberId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isStaff();
@@ -229,7 +235,8 @@ service cloud.firestore {
 
     match /notifications/{notificationId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isStaff();
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']));
     }
 
     match /{path=**} {

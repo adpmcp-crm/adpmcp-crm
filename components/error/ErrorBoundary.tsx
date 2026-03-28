@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCcw } from 'lucide-react';
+import { CircleAlert, RefreshCcw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
           <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-8 h-8 text-red-600" />
+              <CircleAlert className="w-8 h-8 text-red-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Ops! Algo deu errado</h2>
             <p className="text-gray-600 mb-8">{errorMessage}</p>

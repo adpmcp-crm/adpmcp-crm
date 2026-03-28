@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, X, Check, Info, AlertCircle, Clock } from 'lucide-react';
+import { Bell, X, Check, Info, CircleAlert, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, orderBy, limit, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useFirebase } from '@/components/providers/FirebaseProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export function NotificationDropdown() {
-  const { user } = useFirebase();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -20,8 +20,8 @@ export function NotificationDropdown() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...(doc.data() as any)
-      }));
+        ...doc.data()
+      })) as any[];
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.read).length);
     }, (error) => {
@@ -110,7 +110,7 @@ export function NotificationDropdown() {
                         'bg-blue-50 text-blue-600'
                       }`}>
                         {notif.type === 'success' ? <Check className="w-5 h-5" /> :
-                         notif.type === 'warning' ? <AlertCircle className="w-5 h-5" /> :
+                         notif.type === 'warning' ? <CircleAlert className="w-5 h-5" /> :
                          <Info className="w-5 h-5" />}
                       </div>
                       <div className="flex-1 min-w-0">

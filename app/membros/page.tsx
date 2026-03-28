@@ -13,7 +13,7 @@ import {
   Mail, 
   Phone, 
   Calendar,
-  MapPin,
+  MapPin, 
   Loader2,
   LogIn,
   Users,
@@ -174,6 +174,7 @@ export default function MembersPage() {
                           src={member.photoURL} 
                           alt={member.name} 
                           fill 
+                          sizes="64px"
                           className="object-cover"
                           referrerPolicy="no-referrer"
                         />
@@ -186,7 +187,13 @@ export default function MembersPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      <h3 
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setIsModalOpen(true);
+                        }}
+                        className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors cursor-pointer"
+                      >
                         {member.name}
                       </h3>
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg ${
@@ -244,7 +251,7 @@ export default function MembersPage() {
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-500">
                     <MapPin className="w-4 h-4" />
-                    <span className="font-medium">{member.campusId || 'Não vinculado'}</span>
+                    <span className="font-medium truncate">{member.address || member.campusId || 'Não vinculado'}</span>
                   </div>
                 </div>
 
@@ -253,7 +260,15 @@ export default function MembersPage() {
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{member.created_at ? new Date(member.created_at).toLocaleDateString('pt-BR') : 'Recente'}</span>
                   </div>
-                  <button className="text-blue-600 font-bold hover:underline">Ver Perfil</button>
+                  <button 
+                    onClick={() => {
+                      setSelectedMember(member);
+                      setIsModalOpen(true);
+                    }}
+                    className="text-blue-600 font-bold hover:underline"
+                  >
+                    Ver Perfil
+                  </button>
                 </div>
               </motion.div>
             ))}

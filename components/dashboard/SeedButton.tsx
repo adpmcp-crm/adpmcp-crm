@@ -8,15 +8,17 @@ import { Database, Loader2, CheckCircle } from 'lucide-react';
 export function SeedButton() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
 
   const seedData = async () => {
     setLoading(true);
+    setMessage(null);
     try {
       // Check if already seeded
       const q = query(collection(db, 'members'), limit(1));
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
-        alert('Dados já existem no banco!');
+        setMessage({ type: 'info', text: 'Dados já existem no banco!' });
         setLoading(false);
         return;
       }
@@ -45,16 +47,26 @@ export function SeedButton() {
       }
 
       setDone(true);
+      setMessage({ type: 'success', text: 'Dados semeados com sucesso!' });
     } catch (error) {
       console.error('Error seeding data:', error);
-      alert('Erro ao semear dados. Verifique o console.');
+      setMessage({ type: 'error', text: 'Erro ao semear dados. Verifique o console.' });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
+    <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
+      {message && (
+        <div className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg animate-in fade-in slide-in-from-bottom-2 ${
+          message.type === 'success' ? 'bg-emerald-500 text-white' : 
+          message.type === 'error' ? 'bg-red-500 text-white' : 
+          'bg-blue-500 text-white'
+        }`}>
+          {message.text}
+        </div>
+      )}
       <button
         onClick={seedData}
         disabled={loading || done}

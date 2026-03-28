@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, X, Check, Info, CircleAlert, Clock } from 'lucide-react';
+import { Bell, Check, Info, CircleAlert, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, orderBy, limit, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -98,7 +98,7 @@ export function NotificationDropdown() {
 
               <div className="max-h-[400px] overflow-y-auto">
                 {notifications.length > 0 ? (
-                  notifications.map((notif, idx) => (
+                  notifications.map((notif) => (
                     <div 
                       key={notif.id} 
                       onClick={() => !notif.read && markAsRead(notif.id)}

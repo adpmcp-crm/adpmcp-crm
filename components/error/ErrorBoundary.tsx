@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ReactNode } from 'react';
 import { CircleAlert, RefreshCcw } from 'lucide-react';
 
 interface Props {
@@ -22,8 +22,8 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+  public componentDidCatch(error: Error) {
+    console.error('Uncaught error:', error);
   }
 
   private handleReset = () => {
@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
             errorMessage = "Você não tem permissão para acessar estes dados. Verifique seu login.";
           }
         }
-      } catch (e) {
+      } catch {
         // Not a JSON error
       }
 

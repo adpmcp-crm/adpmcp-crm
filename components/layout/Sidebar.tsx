@@ -9,7 +9,6 @@ import {
   Church, 
   Calendar, 
   Briefcase, 
-  Settings,
   LogOut,
   ChevronRight,
   CircleUser

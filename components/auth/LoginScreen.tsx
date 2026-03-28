@@ -7,14 +7,14 @@ import {
   loginWithMicrosoft,
   loginWithEmail,
   signupWithEmail,
-  resetPassword
+  resetPassword,
+  db
 } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LogIn, 
   ShieldCheck, 
-  Users, 
-  Calendar, 
   Mail, 
   Lock, 
   ArrowLeft,
@@ -42,7 +42,19 @@ export function LoginScreen() {
       if (mode === 'login') {
         await loginWithEmail(email, password);
       } else if (mode === 'signup') {
-        await signupWithEmail(email, password);
+        const userCredential = await signupWithEmail(email, password);
+        const user = userCredential.user;
+        
+        // Create initial profile
+        await setDoc(doc(db, 'profiles', user.uid), {
+          display_name: email.split('@')[0],
+          email: email,
+          role: 'Usuário',
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp()
+        });
+        
+        setSuccess('Conta criada com sucesso!');
       } else if (mode === 'forgot') {
         await resetPassword(email);
         setSuccess('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
@@ -55,6 +67,9 @@ export function LoginScreen() {
       if (err.code === 'auth/email-already-in-use') message = 'Este e-mail já está em uso.';
       if (err.code === 'auth/weak-password') message = 'A senha deve ter pelo menos 6 caracteres.';
       if (err.code === 'auth/invalid-email') message = 'E-mail inválido.';
+      if (err.code === 'auth/operation-not-allowed') {
+        message = 'O login por e-mail não está habilitado no Console do Firebase. Por favor, habilite-o em Authentication > Sign-in method.';
+      }
       setError(message);
     } finally {
       setLoading(false);

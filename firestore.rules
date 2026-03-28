@@ -86,6 +86,23 @@ service cloud.firestore {
     //   - read: bool (optional)
     //   - createdAt: timestamp (optional)
     //
+    // Collection: goals
+    // Document ID: {goalId}
+    // Fields:
+    //   - id: string (optional)
+    //   - title: string (required)
+    //   - target: number (required)
+    //   - current: number (optional)
+    //   - category: string (optional)
+    //   - year: number (required)
+    //
+    // Collection: settings
+    // Document ID: {settingsId}
+    // Fields:
+    //   - id: string (optional)
+    //   - yearVision: string (optional)
+    //   - year: number (optional)
+    //
     // ===============================================================
     // Helper Functions
     // ===============================================================
@@ -191,6 +208,17 @@ service cloud.firestore {
              data.type in ['info', 'success', 'warning', 'error'];
     }
 
+    function isValidGoal(data) {
+      return data.title is string && data.title.size() > 0 &&
+             data.target is number &&
+             data.year is number;
+    }
+
+    function isValidSettings(data) {
+      return (!('yearVision' in data) || data.yearVision is string) &&
+             (!('year' in data) || data.year is number);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -237,6 +265,16 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create, delete: if isStaff();
       allow update: if isStaff() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']));
+    }
+
+    match /goals/{goalId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /settings/{settingsId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
     }
 
     match /{path=**} {

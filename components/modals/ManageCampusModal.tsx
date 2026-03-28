@@ -4,17 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Users, 
-  User, 
   Mail, 
   Phone, 
   Search,
   Loader2,
   Church,
-  Briefcase
+  Briefcase,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot, or } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ManageCampusModalProps {
   isOpen: boolean;
@@ -69,6 +71,38 @@ export function ManageCampusModal({ isOpen, onClose, campus }: ManageCampusModal
     item.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.function?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const title = `Lista de Membros - ${campus?.name}`;
+    
+    doc.setFontSize(18);
+    doc.setTextColor(37, 99, 235);
+    doc.text(title, 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, 14, 28);
+    
+    const tableData = members.map(m => [
+      m.name,
+      m.function || 'Membro',
+      m.phone || 'N/A',
+      m.email || 'N/A',
+      m.status || 'N/A'
+    ]);
+    
+    autoTable(doc, {
+      startY: 35,
+      head: [['Nome', 'Função', 'Telefone', 'E-mail', 'Status']],
+      body: tableData,
+      headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      styles: { fontSize: 9 }
+    });
+    
+    doc.save(`Membros_${campus?.name.replace(/\s+/g, '_')}.pdf`);
+  };
 
   return (
     <AnimatePresence>
@@ -187,7 +221,15 @@ export function ManageCampusModal({ isOpen, onClose, campus }: ManageCampusModal
             </div>
 
             {/* Footer */}
-            <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-end">
+            <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center">
+              <button
+                onClick={handleDownloadPDF}
+                disabled={members.length === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                <Download className="w-4 h-4" />
+                <span>Baixar Lista (PDF)</span>
+              </button>
               <button
                 onClick={onClose}
                 className="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 shadow-sm"

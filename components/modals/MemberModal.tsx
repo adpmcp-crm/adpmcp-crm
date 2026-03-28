@@ -13,11 +13,15 @@ import {
   Church,
   Loader2,
   Calendar,
-  MapPin
+  MapPin,
+  Camera,
+  Upload
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage, ref, uploadBytes, getDownloadURL } from '@/lib/firebase';
+import * as XLSX from 'xlsx';
+import Image from 'next/image';
 
 interface MemberModalProps {
   isOpen: boolean;
@@ -29,6 +33,8 @@ interface MemberModalProps {
 export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps) {
   const [campuses, setCampuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,7 +47,8 @@ export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps)
     campusId: '',
     birthDate: '',
     address: '',
-    department: ''
+    department: '',
+    photoURL: ''
   });
 
   useEffect(() => {
@@ -66,7 +73,8 @@ export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps)
         campusId: member.campusId || '',
         birthDate: member.birthDate || '',
         address: member.address || '',
-        department: member.department || ''
+        department: member.department || '',
+        photoURL: member.photoURL || ''
       });
     } else {
       setFormData({
@@ -81,10 +89,77 @@ export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps)
         campusId: '',
         birthDate: '',
         address: '',
-        department: ''
+        department: '',
+        photoURL: ''
       });
     }
   }, [member, type, isOpen]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `members/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setFormData(prev => ({ ...prev, photoURL: url }));
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        setLoading(true);
+        for (const row of data as any[]) {
+          const newMember = {
+            name: row.Nome || row.name || '',
+            email: row.Email || row.email || '',
+            phone: row.Telefone || row.phone || '',
+            function: row.Função || row.function || '',
+            status: row.Status || row.status || (type === 'member' ? 'ativo' : 'Pastor'),
+            campusId: formData.campusId, // Use current selected campus
+            address: row.Endereço || row.address || '',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          };
+          
+          const collectionName = type === 'member' ? 'members' : 'team';
+          const ref = await addDoc(collection(db, collectionName), newMember);
+          
+          if (type === 'team') {
+            await setDoc(doc(db, 'members', ref.id), newMember);
+          }
+        }
+        setMessage({ type: 'success', text: 'Importação concluída com sucesso!' });
+        setTimeout(() => {
+          onClose();
+          setMessage(null);
+        }, 2000);
+      } catch (error) {
+        console.error('Error parsing file:', error);
+        setMessage({ type: 'error', text: 'Erro ao processar arquivo. Verifique o formato.' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +180,7 @@ export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps)
         if (type === 'team') {
           try {
             await updateDoc(doc(db, 'members', member.id), data);
-          } catch (e) {
+          } catch {
             // Se o documento não existir na coleção de membros (ex: registros antigos), cria-o
             await setDoc(doc(db, 'members', member.id), data);
           }
@@ -120,10 +195,14 @@ export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps)
           await addDoc(collection(db, 'members'), data);
         }
       }
-      onClose();
+      setMessage({ type: 'success', text: 'Salvo com sucesso!' });
+      setTimeout(() => {
+        onClose();
+        setMessage(null);
+      }, 1500);
     } catch (error) {
       console.error('Error saving:', error);
-      alert('Erro ao salvar. Verifique as permissões.');
+      setMessage({ type: 'error', text: 'Erro ao salvar. Verifique as permissões.' });
     } finally {
       setLoading(false);
     }
@@ -164,7 +243,43 @@ export function MemberModal({ isOpen, onClose, member, type }: MemberModalProps)
               </button>
             </div>
 
+            {message && (
+              <div className={`p-4 text-sm font-bold text-center ${
+                message.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+              }`}>
+                {message.text}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col sm:flex-row items-center gap-8 mb-8 p-6 bg-gray-50 rounded-[24px]">
+                <div className="relative group">
+                  <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200 overflow-hidden relative shadow-sm">
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                    ) : formData.photoURL ? (
+                      <Image src={formData.photoURL} alt="Preview" fill sizes="96px" className="object-cover" />
+                    ) : (
+                      <User className="w-8 h-8 text-gray-300" />
+                    )}
+                  </div>
+                  <label className="absolute -bottom-2 -right-2 p-2 bg-blue-600 text-white rounded-xl shadow-lg cursor-pointer hover:bg-blue-700 transition-all active:scale-95">
+                    <Camera className="w-4 h-4" />
+                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                  </label>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h4 className="font-bold text-gray-900">Foto de Perfil</h4>
+                  <p className="text-xs text-gray-500">Opcional. Formatos aceitos: JPG, PNG.</p>
+                  <label className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    Importar Lista (Excel/CSV)
+                    <input type="file" className="hidden" accept=".xlsx, .xls, .csv" onChange={handleBulkUpload} />
+                  </label>
+                  <p className="text-[10px] text-gray-400 mt-1">Para Word/PDF, copie a tabela para o Excel antes de importar.</p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Nome Completo */}
                 <div className="space-y-2">

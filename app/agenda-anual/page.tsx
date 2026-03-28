@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { 
-  Calendar, 
   Plus, 
   MapPin, 
   Briefcase, 
@@ -15,21 +14,27 @@ import {
   ChevronRight,
   FileText,
   MoreVertical,
-  Users
+  Users,
+  Target
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { ActivityModal } from '@/components/modals/ActivityModal';
+import { GoalModal } from '@/components/modals/GoalModal';
 import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Agenda Anual Page - Fixed missing 'where' import
 export default function AgendaAnualPage() {
   const { user, loading: authLoading } = useAuth();
   const [activities, setActivities] = useState<any[]>([]);
+  const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<any>(null);
   const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
@@ -39,8 +44,9 @@ export default function AgendaAnualPage() {
     if (!user) return;
 
     const q = query(collection(db, 'activities'), orderBy('month', 'asc'), orderBy('day', 'asc'));
+    const goalsQ = query(collection(db, 'goals'), where('year', '==', currentYear));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeActivities = onSnapshot(q, (snapshot) => {
       setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
@@ -48,11 +54,37 @@ export default function AgendaAnualPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [user]);
+    const unsubscribeGoals = onSnapshot(goalsQ, (snapshot) => {
+      setGoals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'goals');
+    });
+
+    return () => {
+      unsubscribeActivities();
+      unsubscribeGoals();
+    };
+  }, [user, currentYear]);
 
   const nextActivity = activities.find(a => a.status !== 'Completed');
-  const departmentalFestivals = activities.filter(a => a.department && a.department !== 'Geral').slice(0, 2);
+  const municipalEvents = activities.filter(a => a.department && a.department !== 'Geral').slice(0, 3);
+
+  const calculateScoreRank = () => {
+    if (activities.length === 0 && goals.length === 0) return 0;
+    
+    const completedActivities = activities.filter(a => a.status === 'Completed').length;
+    const activityProgress = activities.length > 0 ? (completedActivities / activities.length) * 50 : 0;
+    
+    const totalGoalProgress = goals.reduce((acc, goal) => {
+      const progress = goal.target > 0 ? (goal.current / goal.target) : 0;
+      return acc + Math.min(progress, 1);
+    }, 0);
+    const goalsProgress = goals.length > 0 ? (totalGoalProgress / goals.length) * 50 : 0;
+    
+    return Math.round(activityProgress + goalsProgress);
+  };
+
+  const scoreRank = calculateScoreRank();
 
   const handleDelete = async () => {
     if (!activityToDelete) return;
@@ -163,12 +195,17 @@ export default function AgendaAnualPage() {
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pico de Atividade</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Score Rank</span>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-4xl font-black text-gray-900">Ago</span>
-            <span className="text-gray-500 text-sm font-medium">18 Eventos</span>
+            <span className="text-4xl font-black text-gray-900">{scoreRank}%</span>
+            <span className={`font-bold text-sm ${scoreRank > 50 ? 'text-emerald-500' : 'text-amber-500'}`}>
+              {scoreRank > 80 ? 'Excelente' : scoreRank > 50 ? 'Bom' : 'Em Progresso'}
+            </span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-4 font-bold italic uppercase tracking-wider">Mês de Baptismo</p>
+          <div className="mt-4 h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+            <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${scoreRank}%` }}></div>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-4 font-bold italic uppercase tracking-wider">Baseado em metas e eventos</p>
         </div>
         <div className="md:col-span-2 bg-blue-600 p-8 rounded-[32px] shadow-xl shadow-blue-100 relative overflow-hidden flex flex-col justify-between text-white">
           <div className="relative z-10">
@@ -304,9 +341,9 @@ export default function AgendaAnualPage() {
         {/* Sidebar Column */}
         <div className="lg:col-span-4 space-y-8">
           <div className="bg-gray-50 p-8 rounded-[40px] border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Festivais Departamentais</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Eventos Municipais</h3>
             <div className="space-y-4">
-              {departmentalFestivals.length > 0 ? departmentalFestivals.map((festival, idx) => (
+              {municipalEvents.length > 0 ? municipalEvents.map((festival, idx) => (
                 <div key={festival.id} className="p-5 bg-white rounded-3xl shadow-sm hover:translate-y-[-4px] transition-all duration-300 border border-gray-100">
                   <div className={`w-10 h-10 ${idx % 2 === 0 ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'} flex items-center justify-center rounded-2xl mb-4`}>
                     {idx % 2 === 0 ? <Users className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
@@ -323,35 +360,60 @@ export default function AgendaAnualPage() {
                   </div>
                 </div>
               )) : (
-                <p className="text-sm text-gray-500 italic">Nenhum festival agendado.</p>
+                <p className="text-sm text-gray-500 italic">Nenhum evento agendado.</p>
               )}
             </div>
           </div>
 
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Índice Litúrgico</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
-                  <span className="text-sm font-bold text-gray-700">Sacramentos & Baptismos</span>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Metas do Ano</h3>
+              <button 
+                onClick={() => {
+                  setSelectedGoal(null);
+                  setIsGoalModalOpen(true);
+                }}
+                className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {goals.length > 0 ? goals.map((goal) => (
+                <div 
+                  key={goal.id} 
+                  className="space-y-2 group cursor-pointer"
+                  onClick={() => {
+                    setSelectedGoal(goal);
+                    setIsGoalModalOpen(true);
+                  }}
+                >
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{goal.title}</h4>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{goal.category}</p>
+                    </div>
+                    <span className="text-xs font-black text-blue-600">
+                      {Math.round((goal.current / goal.target) * 100)}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-600 transition-all duration-500" 
+                      style={{ width: `${Math.min((goal.current / goal.target) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-[10px] text-gray-400 text-right font-medium">
+                    {goal.current} / {goal.target}
+                  </p>
                 </div>
-                <span className="text-sm font-black text-blue-600">12</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                  <span className="text-sm font-bold text-gray-700">Comunidade & Festivais</span>
+              )) : (
+                <div className="text-center py-6">
+                  <Target className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500">Nenhuma meta definida.</p>
                 </div>
-                <span className="text-sm font-black text-emerald-600">24</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                  <span className="text-sm font-bold text-gray-700">Sessões Administrativas</span>
-                </div>
-                <span className="text-sm font-black text-amber-600">8</span>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -361,6 +423,12 @@ export default function AgendaAnualPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         activity={selectedActivity}
+      />
+
+      <GoalModal 
+        isOpen={isGoalModalOpen}
+        onClose={() => setIsGoalModalOpen(false)}
+        goal={selectedGoal}
       />
 
       <ConfirmModal 

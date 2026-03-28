@@ -20,6 +20,7 @@ interface DepartmentModalProps {
 
 export function DepartmentModal({ isOpen, onClose, department }: DepartmentModalProps) {
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     leaderName: '',
@@ -63,10 +64,14 @@ export function DepartmentModal({ isOpen, onClose, department }: DepartmentModal
       } else {
         await addDoc(collection(db, 'departments'), data);
       }
-      onClose();
+      setMessage({ type: 'success', text: 'Salvo com sucesso!' });
+      setTimeout(() => {
+        onClose();
+        setMessage(null);
+      }, 1500);
     } catch (error) {
       console.error('Error saving department:', error);
-      alert('Erro ao salvar. Verifique as permissões.');
+      setMessage({ type: 'error', text: 'Erro ao salvar. Verifique as permissões.' });
     } finally {
       setLoading(false);
     }
@@ -99,6 +104,14 @@ export function DepartmentModal({ isOpen, onClose, department }: DepartmentModal
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
+
+            {message && (
+              <div className={`p-4 text-sm font-bold text-center ${
+                message.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+              }`}>
+                {message.text}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="space-y-4">

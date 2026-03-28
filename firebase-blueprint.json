@@ -106,6 +106,30 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "message", "type"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Meta anual da igreja",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "target": { "type": "number" },
+        "current": { "type": "number" },
+        "category": { "type": "string" },
+        "year": { "type": "number" }
+      },
+      "required": ["title", "target", "year"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Configurações globais do sistema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "yearVision": { "type": "string" },
+        "year": { "type": "number" }
+      }
     }
   },
   "firestore": {
@@ -136,6 +160,14 @@
     "/notifications/{notificationId}": {
       "schema": "Notification",
       "description": "Notificações do sistema"
+    },
+    "/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "Metas anuais"
+    },
+    "/settings/{settingsId}": {
+      "schema": "Settings",
+      "description": "Configurações globais"
     }
   }
 }

@@ -163,6 +163,7 @@ export default function CampusesPage() {
                       src={campus.imageUrl} 
                       alt={campus.name} 
                       fill 
+                      sizes="100vw"
                       className="object-cover group-hover:scale-110 transition-transform duration-700"
                       referrerPolicy="no-referrer"
                     />

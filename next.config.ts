@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ['lucide-react', 'recharts', 'motion'],
+    optimizePackageImports: ['lucide-react', 'recharts'],
   },
   images: {
     remotePatterns: [
@@ -33,7 +33,6 @@ const nextConfig: NextConfig = {
     ],
   },
   env: {
-    DISABLE_HMR: 'true',
   }
 };
 

@@ -5,7 +5,6 @@ import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { 
-  Calendar, 
   Plus, 
   MapPin, 
   Briefcase, 
@@ -17,16 +16,20 @@ import {
   MoreVertical,
   Users
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { ActivityModal } from '@/components/modals/ActivityModal';
+import { ConfirmModal } from '@/components/modals/ConfirmModal';
 
 export default function ActivitiesPage() {
   const { user, loading: authLoading } = useAuth();
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     if (!user) return;
@@ -44,14 +47,15 @@ export default function ActivitiesPage() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta atividade?')) {
-      try {
-        await deleteDoc(doc(db, 'activities', id));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `activities/${id}`);
-        alert('Erro ao excluir.');
-      }
+  const handleDelete = async () => {
+    if (!activityToDelete) return;
+    try {
+      await deleteDoc(doc(db, 'activities', activityToDelete));
+      setActivityToDelete(null);
+      setIsConfirmOpen(false);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `activities/${activityToDelete}`);
+      setMessage({ type: 'error', text: 'Erro ao excluir atividade.' });
     }
   };
 
@@ -97,6 +101,14 @@ export default function ActivitiesPage() {
           </button>
         </div>
       </header>
+
+      {message.text && (
+        <div className={`p-4 rounded-2xl text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 ${
+          message.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+        }`}>
+          {message.text}
+        </div>
+      )}
 
       {/* Stats Bento Grid */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -208,7 +220,8 @@ export default function ActivitiesPage() {
                                   </button>
                                   <button 
                                     onClick={() => {
-                                      handleDelete(activity.id);
+                                      setActivityToDelete(activity.id);
+                                      setIsConfirmOpen(true);
                                       setActiveMenu(null);
                                     }}
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all"
@@ -309,6 +322,14 @@ export default function ActivitiesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         activity={selectedActivity}
+      />
+
+      <ConfirmModal 
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Excluir Atividade"
+        message="Tem certeza que deseja excluir esta atividade? Esta ação não pode ser desfeita."
       />
     </div>
   );

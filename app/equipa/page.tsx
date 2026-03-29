@@ -5,6 +5,7 @@ import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { loginWithGoogle } from '@/lib/auth';
+import { SpreadsheetUploadButton } from '@/components/ui/SpreadsheetUploadButton';
 import { 
   Search, 
   Filter, 
@@ -104,19 +105,22 @@ export default function TeamPage() {
     <div className="space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Equipa</h2>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Liderança</h2>
           <p className="text-gray-500 mt-1">Gestão da liderança e oficiais da igreja.</p>
         </div>
-        <button 
-          onClick={() => {
-            setSelectedMember(null);
-            setIsModalOpen(true);
-          }}
-          className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-100 active:scale-95"
-        >
-          <UserPlus className="w-5 h-5" />
-          <span>Novo Líder</span>
-        </button>
+        <div className="flex gap-3">
+          <SpreadsheetUploadButton collectionName="team" />
+          <button 
+            onClick={() => {
+              setSelectedMember(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-100 active:scale-95"
+          >
+            <UserPlus className="w-5 h-5" />
+            <span>Novo Líder</span>
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-col md:flex-row gap-4">

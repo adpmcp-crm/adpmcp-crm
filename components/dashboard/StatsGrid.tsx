@@ -49,7 +49,7 @@ export function StatsGrid() {
     { label: 'Total de Membros', value: counts.members.toString(), icon: Users, color: 'bg-blue-500' },
     { label: 'Igrejas', value: counts.campuses.toString(), icon: Church, color: 'bg-emerald-500' },
     { label: 'Departamentos', value: counts.departments.toString(), icon: Briefcase, color: 'bg-rose-500' },
-    { label: 'Equipa Ministerial', value: counts.team.toString(), icon: UserPlus, color: 'bg-amber-500' },
+    { label: 'Liderança Ministerial', value: counts.team.toString(), icon: UserPlus, color: 'bg-amber-500' },
   ];
 
   if (loading) {

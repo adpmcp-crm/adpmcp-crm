@@ -1,22 +1,26 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Download, Filter, MoreHorizontal, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function RecentRegistrations() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile?.campusId) {
+      setLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, 'members'),
+      where('campusId', '==', profile.campusId),
       orderBy('createdAt', 'desc'),
       limit(5)
     );
@@ -34,7 +38,7 @@ export function RecentRegistrations() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, profile?.campusId]);
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">

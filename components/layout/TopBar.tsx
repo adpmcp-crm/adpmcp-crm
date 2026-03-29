@@ -1,19 +1,29 @@
 'use client';
 
 import React from 'react';
-import { Search, User as UserIcon } from 'lucide-react';
+import { Search, User as UserIcon, Menu } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import { NotificationDropdown } from './NotificationDropdown';
 
-export function TopBar() {
+interface TopBarProps {
+  onToggleSidebar: () => void;
+}
+
+export function TopBar({ onToggleSidebar }: TopBarProps) {
   const { user, profile } = useAuth();
 
   return (
-    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 flex items-center justify-between sticky top-0 z-10">
-      <div className="flex-1 max-w-xl">
-        <div className="relative group">
+    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-10">
+      <div className="flex items-center gap-4 flex-1">
+        <button 
+          onClick={onToggleSidebar}
+          className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl md:hidden"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <div className="relative group flex-1 max-w-xl">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
           <input 
             type="text" 

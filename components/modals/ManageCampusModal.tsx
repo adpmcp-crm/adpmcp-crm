@@ -153,7 +153,7 @@ export function ManageCampusModal({ isOpen, onClose, campus }: ManageCampusModal
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    Equipa ({team.length})
+                    Liderança ({team.length})
                   </button>
                 </div>
 

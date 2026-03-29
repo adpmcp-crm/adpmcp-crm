@@ -11,14 +11,7 @@ export function AppWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-gray-500 font-medium">Carregando ADP CRM...</p>
-        </div>
-      </div>
-    );
+    console.log("AppWrapper: Still loading...");
   }
 
   if (!user) {
